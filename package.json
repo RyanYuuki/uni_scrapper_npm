@@ -1,0 +1,31 @@
+{
+  "name": "uni_scrapper",
+  "version": "1.0.1",
+  "description": "A Collection of Movies, Series, Animes Scrapper.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "keywords": [
+    "Anime",
+    "Scrapper",
+    "Streaming",
+    "Movies",
+    "Series"
+  ],
+  "author": "RyanYuuki",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.10.0"
+  }
+}
