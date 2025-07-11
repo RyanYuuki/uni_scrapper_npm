@@ -9,6 +9,7 @@ const index_1 = require("../index");
 var Source;
 (function (Source) {
     Source["XPRIME"] = "xprime";
+    Source["AUTOEMBED"] = "autoembed";
 })(Source || (exports.Source = Source = {}));
 class SourceHandler {
     constructor() {
@@ -17,6 +18,7 @@ class SourceHandler {
     }
     initializeSources() {
         this.sources.set(Source.XPRIME, new index_1.Xprime());
+        this.sources.set(Source.AUTOEMBED, new index_1.AutoEmbedSource());
     }
     getAllSources() {
         return Array.from(this.sources.values());

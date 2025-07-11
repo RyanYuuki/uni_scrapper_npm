@@ -25,6 +25,7 @@ __exportStar(require("./types/stream"), exports);
 __exportStar(require("./types/media"), exports);
 __exportStar(require("./types/base.source"), exports);
 __exportStar(require("./scrappers/xprime.scrapper"), exports);
+__exportStar(require("./scrappers/embed.scrapper"), exports);
 __exportStar(require("./types/media"), exports);
 var sources_handler_1 = require("./handler/sources.handler");
 Object.defineProperty(exports, "UniScrapper", { enumerable: true, get: function () { return sources_handler_1.SourceHandler; } });

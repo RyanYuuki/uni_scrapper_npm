@@ -60,7 +60,7 @@ class Xprime extends index_2.BaseSource {
                                 imdbId,
                                 season: season.season_number,
                                 name,
-                                episode: episodeCount,
+                                episode: ep,
                                 year,
                             }),
                         });

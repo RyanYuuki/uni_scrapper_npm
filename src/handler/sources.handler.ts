@@ -1,8 +1,16 @@
 import axios from "axios";
-import { Media, Stream, SearchResult, BaseSource, Xprime } from "../index";
+import {
+  Media,
+  Stream,
+  SearchResult,
+  BaseSource,
+  Xprime,
+  AutoEmbedSource,
+} from "../index";
 
 export enum Source {
   XPRIME = "xprime",
+  AUTOEMBED = "autoembed",
 }
 
 export class SourceHandler {
@@ -14,6 +22,7 @@ export class SourceHandler {
 
   private initializeSources(): void {
     this.sources.set(Source.XPRIME, new Xprime());
+    this.sources.set(Source.AUTOEMBED, new AutoEmbedSource());
   }
 
   getAllSources(): BaseSource[] {

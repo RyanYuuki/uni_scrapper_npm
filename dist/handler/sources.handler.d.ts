@@ -1,6 +1,7 @@
 import { Media, Stream, SearchResult, BaseSource } from "../index";
 export declare enum Source {
-    XPRIME = "xprime"
+    XPRIME = "xprime",
+    AUTOEMBED = "autoembed"
 }
 export declare class SourceHandler {
     private sources;

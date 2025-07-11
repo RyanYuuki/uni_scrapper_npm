@@ -1,13 +1,14 @@
 {
   "name": "uni_scrapper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Collection of Movies, Series, Animes Scrapper.",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --detectOpenHandles"
   },
   "files": [
     "dist/**/*"
@@ -22,7 +23,10 @@
   "author": "RyanYuuki",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^18.0.0",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
