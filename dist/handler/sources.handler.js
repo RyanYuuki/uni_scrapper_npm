@@ -161,6 +161,25 @@ class SourceHandler {
         const allStreams = await Promise.all(sourcesToUse.map(([_, source]) => source.getStreams(id)));
         return allStreams.flat();
     }
+    async getPopular() {
+        try {
+            const url = "https://tmdb.hexa.watch/api/tmdb/trending/all/week?page=1";
+            const data = await index_1.rotatingAxios.get(url);
+            if (data.status !== 200) {
+                throw new Error(`Failed to load movie data: ${data.status}`);
+            }
+            const result = (data.data.results || []).map((e) => ({
+                id: `https://tmdb.hexa.watch/api/tmdb/movie/${e.id}`,
+                title: e.title || e.name,
+                poster: `https://image.tmdb.org/t/p/w500${e.poster_path || e.backdrop_path || ""}`,
+            }));
+            return result;
+        }
+        catch (error) {
+            console.log("Search error:", error);
+            throw error;
+        }
+    }
 }
 exports.SourceHandler = SourceHandler;
 exports.default = SourceHandler;

@@ -13,6 +13,7 @@ export declare class SourceHandler {
     getDetails(id: string): Promise<Media>;
     getStreams(id: string, source?: Source): Promise<Stream[]>;
     getStreamsFromAllSources(id: string, except?: Source): Promise<Stream[]>;
+    getPopular(): Promise<SearchResult[]>;
 }
 export default SourceHandler;
 //# sourceMappingURL=sources.handler.d.ts.map
