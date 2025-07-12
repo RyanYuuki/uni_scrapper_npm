@@ -20,7 +20,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.rotatingAxios = exports.Source = exports.UniScrapper = void 0;
 const axios_1 = __importDefault(require("axios"));
 const headers_1 = require("./utils/headers");
-__exportStar(require("./types/server.config"), exports);
 __exportStar(require("./types/stream"), exports);
 __exportStar(require("./types/media"), exports);
 __exportStar(require("./types/base.source"), exports);

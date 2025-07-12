@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from "axios";
 import { headerConfigs } from "./utils/headers";
-export * from "./types/server.config";
 export * from "./types/stream";
 export * from "./types/media";
 export * from "./types/base.source";

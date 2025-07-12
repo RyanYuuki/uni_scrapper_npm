@@ -1,5 +1,4 @@
 import { AxiosInstance } from "axios";
-export * from "./types/server.config";
 export * from "./types/stream";
 export * from "./types/media";
 export * from "./types/base.source";
