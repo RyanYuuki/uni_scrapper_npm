@@ -5,8 +5,8 @@ export class Xprime extends BaseSource {
   baseUrl = "https://xprime.tv";
 
   headers = {
-    Referer: this.baseUrl,
-    origin: this.baseUrl.slice(0, -1),
+    Referer: `${this.baseUrl}/`,
+    origin: this.baseUrl,
   };
 
   async getStreams(slug: string): Promise<Stream[]> {
