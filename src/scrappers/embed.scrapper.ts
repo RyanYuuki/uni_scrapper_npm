@@ -1,7 +1,7 @@
 import rotatingAxios, { BaseSource, Media, Stream } from "../index";
 
 export class AutoEmbedSource extends BaseSource {
-  baseUrl = "https://oc.autoembed.cc";
+  baseUrl = "https://proxy.phisher2.workers.dev/?url=https://oc.autoembed.cc";
   headers = {
     Referer: "https://moviebox.ng/",
     origin: "https://moviebox.ng",
