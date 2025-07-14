@@ -8,8 +8,8 @@ class Xprime extends index_2.BaseSource {
         super(...arguments);
         this.baseUrl = "https://xprime.tv";
         this.headers = {
-            Referer: this.baseUrl,
-            origin: this.baseUrl.slice(0, -1),
+            Referer: `${this.baseUrl}/`,
+            origin: this.baseUrl,
         };
     }
     async getStreams(slug) {
