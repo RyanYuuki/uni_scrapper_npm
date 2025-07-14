@@ -2,6 +2,7 @@ import { rotatingAxios as axios } from "../index";
 import { Stream, BaseSource, Subtitle, Media } from "../index";
 
 export class Xprime extends BaseSource {
+  proxyUrl = "https://proxy.phisher2.workers.dev/?url=";
   baseUrl = "https://xprime.tv";
 
   headers = {
@@ -25,9 +26,13 @@ export class Xprime extends BaseSource {
     const fallback: Stream[] = [];
 
     try {
-      let url = `https://backend.xprime.tv/primebox?name=${encodeURIComponent(
-        name
-      )}&fallback_year=${year}&id=${id}&imdb=${imdbId}`;
+      let url = `${
+        this.proxyUrl
+      }https://backend.xprime.tv/primebox?name=${encodeURIComponent(name)}`;
+
+      if (year !== undefined) url += `&fallback_year=${year}`;
+      if (id !== undefined) url += `&id=${id}`;
+      if (imdbId !== undefined) url += `&imdb=${imdbId}`;
 
       if (season != null && episode != null) {
         url += `&season=${season}&episode=${episode}`;
@@ -36,10 +41,6 @@ export class Xprime extends BaseSource {
       const primeboxUrl = url;
       const phoenixUrl = url.replaceAll("primebox", "phoenix");
       const primenetUrl = url.replaceAll("primebox", "primenet");
-
-      console.log("Calling Primebox URL:", primeboxUrl);
-      console.log("Calling Phoenix URL:", phoenixUrl);
-      console.log("Calling Primenet URL:", primenetUrl);
 
       const futures = await Promise.allSettled([
         this.fetchPrimebox(primeboxUrl),
