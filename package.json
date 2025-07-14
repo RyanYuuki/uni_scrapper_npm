@@ -1,6 +1,6 @@
 {
   "name": "uni_scrapper",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "A Collection of Movies, Series, Animes Scrapper.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

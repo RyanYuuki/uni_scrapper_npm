@@ -2,7 +2,6 @@ import { rotatingAxios as axios } from "../index";
 import { Stream, BaseSource, Subtitle, Media } from "../index";
 
 export class Xprime extends BaseSource {
-  proxyUrl = "https://proxy.phisher2.workers.dev/?url=";
   baseUrl = "https://xprime.tv";
 
   headers = {
@@ -26,9 +25,9 @@ export class Xprime extends BaseSource {
     const fallback: Stream[] = [];
 
     try {
-      let url = `${
-        this.proxyUrl
-      }https://backend.xprime.tv/primebox?name=${encodeURIComponent(name)}`;
+      let url = `https://backend.xprime.tv/primebox?name=${encodeURIComponent(
+        name
+      )}`;
 
       if (year !== undefined) url += `&fallback_year=${year}`;
       if (id !== undefined) url += `&id=${id}`;

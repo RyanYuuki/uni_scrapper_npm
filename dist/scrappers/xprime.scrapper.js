@@ -19,16 +19,19 @@ class Xprime extends index_2.BaseSource {
     async fetchXprime(id, imdbId, name, year, season, episode) {
         const fallback = [];
         try {
-            let url = `https://backend.xprime.tv/primebox?name=${encodeURIComponent(name)}&fallback_year=${year}&id=${id}&imdb=${imdbId}`;
+            let url = `https://backend.xprime.tv/primebox?name=${encodeURIComponent(name)}`;
+            if (year !== undefined)
+                url += `&fallback_year=${year}`;
+            if (id !== undefined)
+                url += `&id=${id}`;
+            if (imdbId !== undefined)
+                url += `&imdb=${imdbId}`;
             if (season != null && episode != null) {
                 url += `&season=${season}&episode=${episode}`;
             }
             const primeboxUrl = url;
             const phoenixUrl = url.replaceAll("primebox", "phoenix");
             const primenetUrl = url.replaceAll("primebox", "primenet");
-            console.log("Calling Primebox URL:", primeboxUrl);
-            console.log("Calling Phoenix URL:", phoenixUrl);
-            console.log("Calling Primenet URL:", primenetUrl);
             const futures = await Promise.allSettled([
                 this.fetchPrimebox(primeboxUrl),
                 this.fetchPhoenix(phoenixUrl),
