@@ -21,7 +21,7 @@ class Xprime extends index_2.BaseSource {
         try {
             let url = `https://backend.xprime.tv/primebox?name=${encodeURIComponent(name)}`;
             if (year !== undefined)
-                url += `&fallback_year=${year}`;
+                url += `&year=${year}`;
             if (id !== undefined)
                 url += `&id=${id}`;
             if (imdbId !== undefined)

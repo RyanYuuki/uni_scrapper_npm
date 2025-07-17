@@ -29,7 +29,7 @@ export class Xprime extends BaseSource {
         name
       )}`;
 
-      if (year !== undefined) url += `&fallback_year=${year}`;
+      if (year !== undefined) url += `&year=${year}`;
       if (id !== undefined) url += `&id=${id}`;
       if (imdbId !== undefined) url += `&imdb=${imdbId}`;
 

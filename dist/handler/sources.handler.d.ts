@@ -1,11 +1,16 @@
 import { Media, Stream, SearchResult, BaseSource } from "../index";
 export declare enum Source {
     XPRIME = "xprime",
-    AUTOEMBED = "autoembed"
+    AUTOEMBED = "autoembed",
+    VIDSRC = "vidsrc"
 }
 export declare class SourceHandler {
     private sources;
-    constructor();
+    private apiKey;
+    constructor({ tmdbKey }: {
+        tmdbKey: string;
+    });
+    private request;
     private initializeSources;
     getAllSources(): BaseSource[];
     getSource(source: Source): BaseSource;
