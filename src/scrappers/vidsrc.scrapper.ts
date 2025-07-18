@@ -1,137 +1,157 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { BaseSource, Stream } from "../index";
-import * as cheerio from "cheerio";
 
 class VidSrcSource extends BaseSource {
   baseUrl = "https://himer365ery.com/play";
+  jarviBaseUrl = "https://jarvi366dow.com";
   headers = {
     Referer: "https://himer365ery.com/",
     origin: "https://himer365ery.com",
   };
-  private tmdbApiKey: string;
 
-  constructor(key: string) {
+  constructor() {
     super();
-    this.tmdbApiKey = key;
   }
 
-  async getImdbId(
-    tmdbId: string,
-    imdbId?: string,
-    season?: string,
-    episode?: string
-  ): Promise<string> {
-    if (imdbId) {
-      return imdbId;
-    }
-
-    try {
-      const type = season && episode ? "tv" : "movie";
-      const resp = await axios.get(
-        `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.tmdbApiKey}`,
-          },
-        }
-      );
-      return resp.data.imdb_id;
-    } catch (error) {
-      console.error("Error getting IMDB ID:", error);
-      throw error;
-    }
-  }
-
-  extractFileUrl(htmlContent: string): string | null {
+  private extractFileUrl(htmlContent: string): string | null {
     const fileUrlRegex = /"file":"([^"]+)"/;
-    const fileUrlMatch = htmlContent.match(fileUrlRegex);
-    return fileUrlMatch ? fileUrlMatch[1].replace(/\\\//g, "/") : null;
+    const match = htmlContent.match(fileUrlRegex);
+    return match ? match[1].replace(/\\\//g, "/") : null;
   }
 
-  extractKey(htmlContent: string): string | null {
+  private extractKey(htmlContent: string): string | null {
     const keyRegex = /"key":"([^"]+)"/;
-    const keyMatch = htmlContent.match(keyRegex);
-    return keyMatch ? keyMatch[1] : null;
+    const match = htmlContent.match(keyRegex);
+    return match ? match[1] : null;
   }
 
-  async getStreams(slug: string): Promise<Stream[]> {
-    const { id: tmdbId, imdbId, season, episode } = JSON.parse(slug);
-    let streams: Stream[] = [];
+  private buildFinalUrl(decodedFileUrl: string): string {
+    return decodedFileUrl.includes("https")
+      ? decodedFileUrl
+      : `${this.jarviBaseUrl}${decodedFileUrl}`;
+  }
 
+  private buildPlaylistUrl(file: string): string {
+    const strippedUri = decodeURIComponent(file.replaceAll("~", ""));
+    return strippedUri.includes("playlist")
+      ? `${this.jarviBaseUrl}/${strippedUri}`
+      : `${this.jarviBaseUrl}/playlist/${strippedUri}.txt`;
+  }
+
+  private async fetchStreamData(
+    url: string,
+    quality: string,
+    key: string
+  ): Promise<Stream | null> {
     try {
-      const id = await this.getImdbId(tmdbId, imdbId, season, episode);
-
-      const url = `${this.baseUrl}/${id}`;
-      const response = await axios.get(url, {
-        headers: this.headers,
+      const response: AxiosResponse<string> = await axios.get(url, {
+        headers: {
+          ...this.headers,
+          "X-CSRF-TOKEN": key,
+        },
       });
+
+      return {
+        url: response.data,
+        quality,
+        subtitles: [],
+        headers: this.headers,
+      };
+    } catch (error) {
+      console.error(`Error fetching stream from ${url}:`, error);
+      return null;
+    }
+  }
+
+  private async processTvShowStreams(
+    playerData: any[],
+    season: string,
+    episode: string,
+    key: string
+  ): Promise<Stream[]> {
+    const seasonBlock = playerData.find((s) => s.id == season);
+    if (!seasonBlock || !Array.isArray(seasonBlock.folder)) {
+      throw new Error(`Invalid season block for season ${season}`);
+    }
+
+    const episodeBlock = seasonBlock.folder.find((e) => e.episode == episode);
+    if (!episodeBlock || !Array.isArray(episodeBlock.folder)) {
+      throw new Error(`Invalid episode block for episode ${episode}`);
+    }
+
+    const promises = episodeBlock.folder
+      .filter((source) => source.file && source.title)
+      .map((source) => {
+        const playlistUrl = this.buildPlaylistUrl(source.file);
+        return this.fetchStreamData(playlistUrl, source.title, key);
+      });
+
+    const results = await Promise.all(promises);
+    return results.filter((stream): stream is Stream => stream !== null);
+  }
+
+  private async processMovieStreams(
+    playerData: any[],
+    key: string
+  ): Promise<Stream[]> {
+    const promises = playerData
+      .filter((source) => source.file && source.title)
+      .map((source) => {
+        const playlistUrl = `${
+          this.jarviBaseUrl
+        }/playlist/${source.file.replaceAll("~", "")}.txt`;
+        return this.fetchStreamData(playlistUrl, source.title, key);
+      });
+
+    const results = await Promise.all(promises);
+    return results.filter((stream): stream is Stream => stream !== null);
+  }
+
+  public async getStreams(slug: string): Promise<Stream[]> {
+    try {
+      const slugData = JSON.parse(slug);
+      const { imdbId, season, episode } = slugData;
+      const isMovie = !season && !episode;
+
+      const url = `${this.baseUrl}/${imdbId}`;
+      const response = await axios.get(url, { headers: this.headers });
       const htmlContent = response.data;
 
       const fileUrl = this.extractFileUrl(htmlContent);
       const key = this.extractKey(htmlContent);
 
-      if (fileUrl) {
-        try {
-          const decodedFileUrl = decodeURIComponent(fileUrl);
-          const playerResp = await axios.get(decodedFileUrl, {
-            headers: {
-              ...this.headers,
-              "X-CSRF-TOKEN": key,
-            },
-          });
+      if (!fileUrl || !key) {
+        console.warn("Failed to extract file URL or key from HTML content");
+        return [];
+      }
 
-          let promises: Promise<Stream | null>[] = [];
+      const decodedFileUrl = decodeURIComponent(fileUrl);
+      const finalUrl = this.buildFinalUrl(decodedFileUrl);
 
-          for (const source of playerResp.data) {
-            const index = playerResp.data.indexOf(source);
+      const playerResponse = await axios.get(finalUrl, {
+        headers: {
+          ...this.headers,
+          "X-CSRF-TOKEN": key,
+        },
+      });
 
-            if (index == 0) continue;
-
-            const cleanedUrl =
-              "https://jarvi366dow.com/playlist/" +
-              source.file.replaceAll("~", "") +
-              ".txt";
-
-            promises.push(
-              axios
-                .get(cleanedUrl, {
-                  headers: {
-                    ...this.headers,
-                    "X-CSRF-TOKEN": key,
-                  },
-                })
-                .then((result) => {
-                  console.log("Result => ", result.data);
-                  const url = result.data;
-
-                  return {
-                    url,
-                    quality: source.title,
-                    subtitles: [],
-                    headers: this.headers,
-                  } as Stream;
-                })
-                .catch((error) => {
-                  console.error(
-                    `Error fetching stream from ${cleanedUrl}:`,
-                    error.message
-                  );
-                  return null;
-                })
-            );
-          }
-
-          const results = await Promise.all(promises);
-          streams = results.filter((stream) => stream !== null) as Stream[];
-        } catch (error) {
-          console.error("Error processing player response:", error);
+      if (isMovie) {
+        return await this.processMovieStreams(playerResponse.data, key);
+      } else {
+        if (!season || !episode) {
+          throw new Error("Season and episode are required for TV shows");
         }
+        return await this.processTvShowStreams(
+          playerResponse.data,
+          season,
+          episode,
+          key
+        );
       }
     } catch (error) {
       console.error("Error in getStreams:", error);
+      return [];
     }
-
-    return streams;
   }
 }
 

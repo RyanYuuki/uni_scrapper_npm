@@ -35,7 +35,7 @@ export class SourceHandler {
   private initializeSources(): void {
     this.sources.set(Source.XPRIME, new Xprime());
     this.sources.set(Source.AUTOEMBED, new AutoEmbedSource());
-    this.sources.set(Source.VIDSRC, new VidSrcSource(this.apiKey));
+    this.sources.set(Source.VIDSRC, new VidSrcSource());
   }
 
   getAllSources(): BaseSource[] {
@@ -120,7 +120,25 @@ export class SourceHandler {
 
       const idMatch = id.match(/(?:movie|tv)\/(\d+)/);
       const tmdbId = idMatch?.[1];
-      const imdbId = parsedData.imdb_id;
+      let imdbId = parsedData.imdb_id;
+
+      if (!imdbId) {
+        try {
+          const type = !isMovie ? "tv" : "movie";
+          const resp = await axios.get(
+            `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids`,
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+              },
+            }
+          );
+          imdbId = resp.data.imdb_id;
+        } catch (error) {
+          console.error("Error getting IMDB ID:", error);
+          throw error;
+        }
+      }
 
       if (!tmdbId) throw new Error("Invalid TMDB ID in URL");
 
@@ -203,7 +221,7 @@ export class SourceHandler {
 
   async getStreams(
     id: string,
-    source: Source = Source.AUTOEMBED
+    source: Source = Source.VIDSRC
   ): Promise<Stream[]> {
     const allSources = Object.values(Source);
     const sourcesToTry = [source, ...allSources.filter((s) => s !== source)];
@@ -215,6 +233,7 @@ export class SourceHandler {
         const instance = this.getSource(source as Source);
         const streams = await instance.getStreams(id);
         if (streams && streams.length) {
+          console.log(errors);
           return streams;
         }
       } catch (err) {

@@ -28,7 +28,7 @@ class SourceHandler {
     initializeSources() {
         this.sources.set(Source.XPRIME, new index_1.Xprime());
         this.sources.set(Source.AUTOEMBED, new index_1.AutoEmbedSource());
-        this.sources.set(Source.VIDSRC, new vidsrc_scrapper_1.default(this.apiKey));
+        this.sources.set(Source.VIDSRC, new vidsrc_scrapper_1.default());
     }
     getAllSources() {
         return Array.from(this.sources.values());
@@ -90,7 +90,22 @@ class SourceHandler {
             let content = null;
             const idMatch = id.match(/(?:movie|tv)\/(\d+)/);
             const tmdbId = idMatch?.[1];
-            const imdbId = parsedData.imdb_id;
+            let imdbId = parsedData.imdb_id;
+            if (!imdbId) {
+                try {
+                    const type = !isMovie ? "tv" : "movie";
+                    const resp = await index_1.rotatingAxios.get(`https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids`, {
+                        headers: {
+                            Authorization: `Bearer ${this.apiKey}`,
+                        },
+                    });
+                    imdbId = resp.data.imdb_id;
+                }
+                catch (error) {
+                    console.error("Error getting IMDB ID:", error);
+                    throw error;
+                }
+            }
             if (!tmdbId)
                 throw new Error("Invalid TMDB ID in URL");
             if (isMovie) {
@@ -163,7 +178,7 @@ class SourceHandler {
             throw error;
         }
     }
-    async getStreams(id, source = Source.AUTOEMBED) {
+    async getStreams(id, source = Source.VIDSRC) {
         const allSources = Object.values(Source);
         const sourcesToTry = [source, ...allSources.filter((s) => s !== source)];
         const errors = [];
@@ -172,6 +187,7 @@ class SourceHandler {
                 const instance = this.getSource(source);
                 const streams = await instance.getStreams(id);
                 if (streams && streams.length) {
+                    console.log(errors);
                     return streams;
                 }
             }
