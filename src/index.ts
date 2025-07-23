@@ -18,7 +18,7 @@ function getRandomHeaders() {
 
 const rotatingAxios: AxiosInstance = axios.create({
   timeout: 30000,
-  maxRedirects: 5,
+//   maxRedirects: 5,
 });
 
 rotatingAxios.interceptors.request.use(

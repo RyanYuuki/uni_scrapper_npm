@@ -7,10 +7,12 @@ import {
   Xprime,
   AutoEmbedSource,
 } from "../index";
+import { MovieApiSource } from "../scrappers/movieapi.scrapper";
 
 export enum Source {
   XPRIME = "xprime",
   AUTOEMBED = "autoembed",
+  MOVIESAPI = "moviesapi",
 }
 
 export class SourceHandler {
@@ -23,6 +25,7 @@ export class SourceHandler {
   private initializeSources(): void {
     this.sources.set(Source.XPRIME, new Xprime());
     this.sources.set(Source.AUTOEMBED, new AutoEmbedSource());
+    this.sources.set(Source.MOVIESAPI , new MovieApiSource)
   }
 
   getAllSources(): BaseSource[] {
