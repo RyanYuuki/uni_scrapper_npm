@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+
 import { headerConfigs } from "./utils/headers";
 export * from "./types/stream";
 export * from "./types/media";
@@ -18,7 +19,8 @@ function getRandomHeaders() {
 
 const rotatingAxios: AxiosInstance = axios.create({
   timeout: 30000,
-//   maxRedirects: 5,
+  //   maxRedirects: 5,
+  ...("maxRedirects" in axios.defaults && { maxRedirects: 5 }),
 });
 
 rotatingAxios.interceptors.request.use(
