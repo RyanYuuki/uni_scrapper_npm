@@ -7,35 +7,25 @@ import {
   Xprime,
   AutoEmbedSource,
 } from "../index";
-import VidSrcSource from "../scrappers/vidsrc.scrapper";
+import { MovieApiSource } from "../scrappers/movieapi.scrapper";
 
 export enum Source {
   XPRIME = "xprime",
   AUTOEMBED = "autoembed",
-  VIDSRC = "vidsrc",
+  MOVIESAPI = "moviesapi",
 }
 
 export class SourceHandler {
   private sources: Map<Source, BaseSource> = new Map();
-  private apiKey: string;
 
-  constructor({ tmdbKey }: { tmdbKey: string }) {
+  constructor() {
     this.initializeSources();
-    this.apiKey = tmdbKey;
-  }
-
-  private request(url: string): Promise<any> {
-    return axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-    });
   }
 
   private initializeSources(): void {
     this.sources.set(Source.XPRIME, new Xprime());
     this.sources.set(Source.AUTOEMBED, new AutoEmbedSource());
-    this.sources.set(Source.VIDSRC, new VidSrcSource());
+    this.sources.set(Source.MOVIESAPI , new MovieApiSource)
   }
 
   getAllSources(): BaseSource[] {
@@ -54,16 +44,16 @@ export class SourceHandler {
     try {
       const cleanedQuery = query.replace(/\bseasons?\b/gi, "").trim();
 
-      const movieUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(
+      const movieUrl = `https://tmdb.hexa.watch/api/tmdb/search/movie?query=${encodeURIComponent(
         cleanedQuery
       )}&page=1&include_adult=false`;
-      const tvUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(
+      const tvUrl = `https://tmdb.hexa.watch/api/tmdb/search/tv?query=${encodeURIComponent(
         cleanedQuery
       )}&page=1&include_adult=false`;
 
       const [movieRes, tvRes] = await Promise.all([
-        this.request(movieUrl),
-        this.request(tvUrl),
+        axios.get(movieUrl),
+        axios.get(tvUrl),
       ]);
 
       if (movieRes.status !== 200) {
@@ -75,7 +65,7 @@ export class SourceHandler {
 
       const movies: SearchResult[] = (movieRes.data.results || []).map(
         (e: any) => ({
-          id: `https://api.themoviedb.org/3/movie/${e.id}`,
+          id: `https://tmdb.hexa.watch/api/tmdb/movie/${e.id}`,
           title: e.title || e.name,
           poster: `https://image.tmdb.org/t/p/w500${
             e.poster_path || e.backdrop_path || ""
@@ -85,7 +75,7 @@ export class SourceHandler {
 
       const series: SearchResult[] = (tvRes.data.results || []).map(
         (e: any) => ({
-          id: `https://api.themoviedb.org/3/tv/${e.id}`,
+          id: `https://tmdb.hexa.watch/api/tmdb/tv/${e.id}`,
           title: e.title || e.name,
           poster: `https://image.tmdb.org/t/p/w500${
             e.poster_path || e.backdrop_path || ""
@@ -110,9 +100,10 @@ export class SourceHandler {
 
   async getDetails(id: string): Promise<Media> {
     try {
-      const response = await this.request(id);
+      const response = await axios.get(id);
+      console.log(id);
       const parsedData = response.data;
-      const isMovie = id.includes("/movie");
+      const isMovie = id.includes("movie");
 
       const name = parsedData.name || parsedData.title;
       const seasons = [];
@@ -120,25 +111,7 @@ export class SourceHandler {
 
       const idMatch = id.match(/(?:movie|tv)\/(\d+)/);
       const tmdbId = idMatch?.[1];
-      let imdbId = parsedData.imdb_id;
-
-      if (!imdbId) {
-        try {
-          const type = !isMovie ? "tv" : "movie";
-          const resp = await axios.get(
-            `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids`,
-            {
-              headers: {
-                Authorization: `Bearer ${this.apiKey}`,
-              },
-            }
-          );
-          imdbId = resp.data.imdb_id;
-        } catch (error) {
-          console.error("Error getting IMDB ID:", error);
-          throw error;
-        }
-      }
+      const imdbId = parsedData.imdb_id;
 
       if (!tmdbId) throw new Error("Invalid TMDB ID in URL");
 
@@ -221,32 +194,10 @@ export class SourceHandler {
 
   async getStreams(
     id: string,
-    source: Source = Source.VIDSRC
+    source: Source = Source.AUTOEMBED
   ): Promise<Stream[]> {
-    const allSources = Object.values(Source);
-    const sourcesToTry = [source, ...allSources.filter((s) => s !== source)];
-
-    const errors: any[] = [];
-
-    for (const src of sourcesToTry) {
-      try {
-        const instance = this.getSource(source as Source);
-        const streams = await instance.getStreams(id);
-        if (streams && streams.length) {
-          console.log(errors);
-          return streams;
-        }
-      } catch (err) {
-        errors.push({ source: src, error: err });
-      }
-    }
-
-    throw new Error(
-      `All sources failed:\n` +
-        errors
-          .map((e) => `- ${e.source}: ${e.error?.message ?? e.error}`)
-          .join("\n")
-    );
+    const sourceInstance = this.getSource(source);
+    return await sourceInstance.getStreams(id);
   }
 
   async getStreamsFromAllSources(
@@ -266,24 +217,23 @@ export class SourceHandler {
 
   async getPopular() {
     try {
-      const url = "https://api.themoviedb.org/3/trending/all/week?page=1";
+      const url = "https://tmdb.hexa.watch/api/tmdb/trending/all/week?page=1";
 
-      const data = await this.request(url);
+      const data = await axios.get(url);
 
       if (data.status !== 200) {
         throw new Error(`Failed to load movie data: ${data.status}`);
       }
 
-      const result: SearchResult[] = (data.data.results || []).map((e: any) => {
-        const type = e.media_type === "movie" ? "movie" : "tv";
-        return {
-          id: `https://api.themoviedb.org/3/${type}/${e.id}`,
+      const result: SearchResult[] = (data.data.results || []).map(
+        (e: any) => ({
+          id: `https://tmdb.hexa.watch/api/tmdb/movie/${e.id}`,
           title: e.title || e.name,
           poster: `https://image.tmdb.org/t/p/w500${
             e.poster_path || e.backdrop_path || ""
           }`,
-        };
-      });
+        })
+      );
 
       return result;
     } catch (error) {
