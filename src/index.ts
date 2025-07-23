@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import axios, { AxiosInstance } from "axios";
+=======
+import axios from "axios";
+>>>>>>> 258ebfb70922c4c25eb151310df4e7e0fb0dc866
 
 import { headerConfigs } from "./utils/headers";
 export * from "./types/stream";
@@ -17,7 +21,7 @@ function getRandomHeaders() {
   return headerConfigs[randomIndex];
 }
 
-const rotatingAxios: AxiosInstance = axios.create({
+const rotatingAxios: Axios.AxiosInstance = axios.create({
   timeout: 30000,
   //   maxRedirects: 5,
   ...("maxRedirects" in axios.defaults && { maxRedirects: 5 }),
