@@ -1,8 +1,8 @@
-<<<<<<< HEAD
+
 import axios, { AxiosInstance } from "axios";
-=======
-import axios from "axios";
->>>>>>> 258ebfb70922c4c25eb151310df4e7e0fb0dc866
+
+// import axios from "axios";
+
 
 import { headerConfigs } from "./utils/headers";
 export * from "./types/stream";
