@@ -1,4 +1,5 @@
-import axios, { AxiosResponse } from "axios";
+import { rotatingAxios as axios } from "../index";
+import { AxiosResponse } from "axios";
 import { BaseSource, Stream } from "../index";
 
 class VidSrcSource extends BaseSource {

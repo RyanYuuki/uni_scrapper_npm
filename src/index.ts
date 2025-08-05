@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { headerConfigs } from "./utils/headers";
 export * from "./types/stream";
 export * from "./types/media";
@@ -16,10 +16,27 @@ function getRandomHeaders() {
   return headerConfigs[randomIndex];
 }
 
-const rotatingAxios: AxiosInstance = axios.create({
+const proxyUrl = process.env.PROXY_URL;
+
+const axiosConfig: AxiosRequestConfig = {
   timeout: 30000,
   maxRedirects: 5,
-});
+};
+
+if (proxyUrl) {
+  const proxy = new URL(proxyUrl);
+  axiosConfig.proxy = {
+    host: proxy.hostname,
+    port: Number(proxy.port),
+    auth: {
+      username: proxy.username,
+      password: proxy.password,
+    },
+    protocol: proxy.protocol.replace(":", ""),
+  };
+}
+
+const rotatingAxios: AxiosInstance = axios.create(axiosConfig);
 
 rotatingAxios.interceptors.request.use(
   (config: any) => {
